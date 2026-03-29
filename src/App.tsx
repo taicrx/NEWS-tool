@@ -368,7 +368,7 @@ export default function App() {
             <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <h2 className="text-lg font-bold flex items-center gap-2 mb-4">
                 <FileText size={20} className="text-blue-500" />
-                AI SOAP 解析器
+                SOAP 解析器
               </h2>
               <textarea 
                 className="w-full h-24 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none resize-none"
