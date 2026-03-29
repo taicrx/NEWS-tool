@@ -131,6 +131,21 @@ export default function App() {
   const possibleSepsis = (vitals.suspectedInfection && totalScore >= 5) ? 'Yes' : 'No';
 
   // --- AI Parser ---
+  const EXAMPLES = [
+    {
+      label: "範例 1: SOB/NSTEMI",
+      text: `S:4-5天睡不好 due to SOB ，睡眠容易中斷，精神倦怠入急診 no chest tightness,no fever,no chills no diarrhea,no vomit Past history:smoker Denied allergy history. O: 體溫： 35.8 度 呼吸： 20 次/分 脈搏： 96 次/分 血氧： 98 % 血壓： 97/66 mmHg 昏迷指數： E4-V5-M6 GCS： 15 分 Chest:wheezing BS A: SOB P: BR, Serum biochemistry. EKG. CXR. favor NSTEMI`
+    },
+    {
+      label: "範例 2: Pneumonia",
+      text: `S: dyspnea noted at nursing home since this noon O: 體溫： 37.7 度 呼吸： 24 次/分 脈搏： 66 次/分 血氧： 86 % 血壓： 124/52 mmHg 昏迷指數： E3-V5-M6 GCS： 14 分 Chest: coarse BS A: he complained general malasie P: BR, Serum biochemistry. EKG. CXR. Lactic Aci 4.610 Procalcito 2.976 Arrange ICU`
+    },
+    {
+      label: "範例 3: Sepsis/UTI",
+      text: `S: fever this noon without obvious symptoms O: 體溫： 38.2 度 呼吸： 19 次/分 脈搏： 82 次/分 血氧： 91 % 血壓： 88/37 mmHg 昏迷指數： E3-V2-M5 GCS： 10 分 A: fever and fever workup P: BR, Serum biochemistry. EKG. CXR. do ACT for r/o ABN, renal abscess, IAI confirmed DNR ACT: LLL pneumonia and favor left APN`
+    }
+  ];
+
   const parseWithAI = async () => {
     if (!soapText.trim()) return;
     setIsParsing(true);
@@ -139,9 +154,28 @@ export default function App() {
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: `
-          你是一個專業的急診醫學助理。請解析以下病歷摘要(SOAP)，提取生命徵象數據。
+          你是一個專業的急診醫學助理。請解析以下半結構化病歷摘要 (SOAP)，提取 NEWS2 評分所需的數據。
           
           病歷內容: "${soapText}"
+          
+          解析規則：
+          1. 生命徵象關鍵字 (中英文皆可)：
+             - 呼吸 (RR): "呼吸", "Resp.", "RR"
+             - 血氧 (SpO2): "血氧", "SPO2", "SpO2"
+             - 體溫 (Temp): "體溫", "B.T.", "Temp"
+             - 血壓 (BP): "血壓", "B.P.", "BP"。格式如 "120/80" 需拆分為 SBP=120, DBP=80。
+             - 脈搏 (HR): "脈搏", "Pulse", "HR"
+          2. 意識狀態 (GCS):
+             - 尋找 "昏迷指數", "GCS", "E-V-M"。
+             - 若有 "E4-V5-M6" 或 "E4V5M6"，請提取 E, V, M 分數，並計算總分。
+             - 若 GCS < 15 或有 "Altered", "Confusion", "Drowsy" 等字眼，"consciousness" 設為 "Altered"。
+          3. 氧氣支持 (Oxygen):
+             - 檢查是否有 "O2 MASK", "N/C", "Nasal Cannula", "6L/MIN", "mask use" 等字眼。若有，"oxygen" 設為 true。
+          4. 感染與敗血症 (Infection):
+             - 檢查診斷 (A) 或計畫 (P) 是否提到 "pneumonia", "UTI", "septic", "infection", "LRTI", "APN" 等。
+             - 檢查檢驗報告 (Lab) 是否有異常：WBC 過高/過低, CRP 過高, Procalcitonin 過高, Lactic Acid 過高。
+             - 若提到疑似感染或檢驗數據支持，"suspectedInfection" 設為 true。
+             - 根據描述強度或檢驗異常程度設定 "infectionLevel": "Strong" (確診、高度懷疑或多項檢驗異常), "Possible" (疑似、待查或單項檢驗異常), "None" (未提及)。
           
           請嚴格以 JSON 格式回傳：
           {
@@ -166,6 +200,19 @@ export default function App() {
       });
 
       const data = JSON.parse(response.text);
+      
+      // Calculate GCS if E, V, M are provided but GCS is not
+      let gcs = data.gcs;
+      if (!gcs && data.e && data.v && data.m) {
+        gcs = data.e + data.v + data.m;
+      }
+
+      // Auto-set consciousness to Altered if GCS < 15
+      let consciousness = data.consciousness || 'Alert';
+      if (gcs !== null && gcs < 15) {
+        consciousness = 'Altered';
+      }
+
       setVitals({
         rr: data.rr,
         spo2: data.spo2,
@@ -173,12 +220,12 @@ export default function App() {
         sbp: data.sbp,
         dbp: data.dbp,
         hr: data.hr,
-        gcs: data.gcs,
+        gcs: gcs,
         e: data.e,
         v: data.v,
         m: data.m,
         oxygen: data.oxygen || false,
-        consciousness: data.consciousness || 'Alert',
+        consciousness: consciousness,
         suspectedInfection: data.suspectedInfection || false,
         infectionLevel: data.infectionLevel || 'None',
       });
@@ -272,7 +319,7 @@ export default function App() {
               Triage Decision Support
             </div>
             <h1 className="text-3xl font-black tracking-tight text-slate-900">
-              臺中醫院 NEWS2 Score 紀錄
+              臺中醫院 NEWS2 & Sepsis 篩檢
             </h1>
           </div>
           <div className="text-right">
@@ -370,6 +417,19 @@ export default function App() {
                 <FileText size={20} className="text-blue-500" />
                 SOAP 解析器
               </h2>
+              
+              <div className="flex flex-wrap gap-2 mb-4">
+                {EXAMPLES.map((ex, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => setSoapText(ex.text)}
+                    className="text-[10px] font-bold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full transition-all border border-slate-200"
+                  >
+                    {ex.label}
+                  </button>
+                ))}
+              </div>
+
               <textarea 
                 className="w-full h-24 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                 placeholder="在此貼上醫師 SOAP 紀錄..."
