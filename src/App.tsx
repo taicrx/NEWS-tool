@@ -185,7 +185,7 @@ export default function App() {
       if (data.mrn) setMrn(data.mrn);
     } catch (error) {
       console.error("AI Parsing failed:", error);
-      alert("AI 解析失敗，請手動輸入。");
+      alert("解析失敗，請手動輸入。");
     } finally {
       setIsParsing(false);
     }
@@ -272,7 +272,7 @@ export default function App() {
               Triage Decision Support
             </div>
             <h1 className="text-3xl font-black tracking-tight text-slate-900">
-              臺中醫院 NEWS2 & Sepsis 篩檢
+              臺中醫院 NEWS2 Score 紀錄
             </h1>
           </div>
           <div className="text-right">
@@ -383,7 +383,7 @@ export default function App() {
                   className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
                 >
                   {isParsing ? <Activity size={18} className="animate-spin" /> : <Search size={18} />}
-                  {isParsing ? "AI 解析中..." : "AI 自動解析病歷"}
+                  {isParsing ? "解析中..." : "開始解析病歷"}
                 </button>
                 <button onClick={() => setSoapText('')} className="px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors">
                   <Trash2 size={18} />
@@ -445,7 +445,7 @@ export default function App() {
 
         {/* Footer Info */}
         <footer className="text-center py-6 text-slate-400 text-[10px] font-medium uppercase tracking-widest">
-          臺中醫院急診部 - NEWS2 & Sepsis Parser v2.0
+          臺中醫院 - NEWS2 & Sepsis Parser v2.0
         </footer>
       </div>
     </div>
