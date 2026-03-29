@@ -131,21 +131,6 @@ export default function App() {
   const possibleSepsis = (vitals.suspectedInfection && totalScore >= 5) ? 'Yes' : 'No';
 
   // --- AI Parser ---
-  const EXAMPLES = [
-    {
-      label: "範例 1: SOB/NSTEMI",
-      text: `S:4-5天睡不好 due to SOB ，睡眠容易中斷，精神倦怠入急診 no chest tightness,no fever,no chills no diarrhea,no vomit Past history:smoker Denied allergy history. O: 體溫： 35.8 度 呼吸： 20 次/分 脈搏： 96 次/分 血氧： 98 % 血壓： 97/66 mmHg 昏迷指數： E4-V5-M6 GCS： 15 分 Chest:wheezing BS A: SOB P: BR, Serum biochemistry. EKG. CXR. favor NSTEMI`
-    },
-    {
-      label: "範例 2: Pneumonia",
-      text: `S: dyspnea noted at nursing home since this noon O: 體溫： 37.7 度 呼吸： 24 次/分 脈搏： 66 次/分 血氧： 86 % 血壓： 124/52 mmHg 昏迷指數： E3-V5-M6 GCS： 14 分 Chest: coarse BS A: he complained general malasie P: BR, Serum biochemistry. EKG. CXR. Lactic Aci 4.610 Procalcito 2.976 Arrange ICU`
-    },
-    {
-      label: "範例 3: Sepsis/UTI",
-      text: `S: fever this noon without obvious symptoms O: 體溫： 38.2 度 呼吸： 19 次/分 脈搏： 82 次/分 血氧： 91 % 血壓： 88/37 mmHg 昏迷指數： E3-V2-M5 GCS： 10 分 A: fever and fever workup P: BR, Serum biochemistry. EKG. CXR. do ACT for r/o ABN, renal abscess, IAI confirmed DNR ACT: LLL pneumonia and favor left APN`
-    }
-  ];
-
   const parseWithAI = async () => {
     if (!soapText.trim()) return;
     setIsParsing(true);
@@ -418,18 +403,6 @@ export default function App() {
                 SOAP 解析器
               </h2>
               
-              <div className="flex flex-wrap gap-2 mb-4">
-                {EXAMPLES.map((ex, idx) => (
-                  <button 
-                    key={idx}
-                    onClick={() => setSoapText(ex.text)}
-                    className="text-[10px] font-bold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full transition-all border border-slate-200"
-                  >
-                    {ex.label}
-                  </button>
-                ))}
-              </div>
-
               <textarea 
                 className="w-full h-24 p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                 placeholder="在此貼上醫師 SOAP 紀錄..."
