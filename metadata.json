@@ -1,0 +1,5 @@
+{
+  "name": "臺中醫院 NEWS2 & Sepsis 篩檢系統",
+  "description": "急診檢傷專用：手動輸入或 AI 解析 SOAP 病歷，自動計算 NEWS2 分數並篩檢敗血症風險。",
+  "requestFramePermissions": []
+}
